@@ -1,6 +1,6 @@
 # Tips
 
-ubuntu支持exfat的方法 
-    
-    sudo apt-get install exfat-utils
+## 记录一些配环境以及一些可能不太常用的命令，博客
+## 记录一些看过的论文的心得，总结
+## 记录一些杂事
     
