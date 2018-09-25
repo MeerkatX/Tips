@@ -1,4 +1,14 @@
-# VGG
+# VGG Net
+
+解决ImageNet中的1000类图像分类和定位问题，VGG16和VGG19表现最好
+
+#### 特点
+
+- 小卷积核。作者将卷积核全部替换为3x3（极少用了1x1）；
+
+- 小池化核。相比AlexNet的3x3的池化核，VGG全部为2x2的池化核；
+- 层数更深特征图更宽。基于前两点外，由于卷积核专注于扩大通道数、池化专注于缩小宽和高，使得模型架构上更深更宽的同时，计算量的增加放缓；
+- 全连接转卷积。网络测试阶段将训练阶段的三个全连接替换为三个卷积，测试重用训练时的参数，使得测试得到的全卷积网络因为没有全连接的限制，因而可以接收任意宽或高的输入。
 
 ## ConvNet Configurations
 
@@ -28,12 +38,18 @@
 
 - All hidden layers之后跟着ReLU。LRN(局部响应归一化)只有一个包含(A-LRN)，论文中认为LRN并没有效果反而增加了存储空间和计算时间
 
+- 结论：
+
+  1. 同样stride下，不同卷积核大小的特征图和卷积参数差别不大
+
+  2. 越大的卷积核计算量越大
+
 ## Training
 
 #### 参数设置
 - using **mini-batch gradient descent with momentum**.The batch size was set to **256**,momentum to **0.9**. 随机（批量）梯度下降+动量
 
-- L2正则以及dropout. The training was regularised by weight decay (the L2 penalty multiplier set to $5^{10^{-4}}$) and dropout regularisation for the first two fully-connected layers (dropout ratio set to **0.5**).
+- L2正则以及dropout. The training was regularised by weight decay (the L2 penalty multiplier set to $5*{10^{-4}}$) and dropout regularisation for the first two fully-connected layers (dropout ratio set to **0.5**).
 
 - 学习率设置，当准确度不再提升时减少学习率 The learning rate was initially set to $10^{−2}$. decreased by a factor of 10 when the validation set accuracy stopped improving
 #### 参数weights的初始化
@@ -57,12 +73,20 @@
 
 #### Testing
 
+- 全连接转卷积 可以接收任意宽或高的输入(测试，训练的宽高不同) **将卷积核大小设置为输入的空间大小.**
 
+## classification experiments
+
+#### single-scale evaluation
+
+#### muti-scale evaluation
 
 
 ## 其它
 
 #### TensorFlow版github VGG16,19代码
+
+[代码](https://github.com/machrisaa/tensorflow-vgg)
 
 #### LRN局部响应归一化
 
@@ -87,4 +111,7 @@
     - 先裁剪后扩充
 
       先把bounding box图片裁剪出来，然后用固定的背景颜色填充成正方形图片(背景颜色也是采用bounding box的像素颜色均值)
-      
+## reference
+
+[深度学习VGG模型核心拆解](https://blog.csdn.net/qq_40027052/article/details/79015827)
+
