@@ -36,12 +36,31 @@
 - L2正则以及dropout. The training was regularised by weight decay (the L2 penalty multiplier set to $5^{10^{-4}}$) and dropout regularisation for the first two fully-connected layers (dropout ratio set to **0.5**).
 
 - 学习率设置，当准确度不再提升时减少学习率 The learning rate was initially set to $10^{−2}$. decreased by a factor of 10 when the validation set accuracy stopped improving
-#### 参数初始化
+#### 参数weights的初始化
 - 先训练一个浅的模型 began with training the configuration A, shallow enough to be trained with random initialisation
 
-- 当训练更深的模型的时候 we initialised the first four convolutional layers and the last three fullyconnected layers with the layers of net A (the intermediate layers were initialised randomly).
+- 当训练更深的模型的时候 we initialised the first four convolutional layers and the last three fullyconnected layers with the layers of net A (the intermediate layers were initialised randomly).中间层随机初始化参数，from a **normal distribution** with zero mean and $10^{-2}$ variance。**biases** = 0
 
 - 并且在这个训练中不减少学习率 We did not decrease the learning rate for the pre-initialised layers, allowing them to change during learning.
+
+- 从rescaled training images随机裁切 每次梯度下降迭代每张图片裁切一次(one crop per image per SGD iteration)这样可以充实训练数据，分别有random horizontal flipping and random RGB colour shift(随机水平移动和随机RGB色移)
+
+- 有两种训练数据缩放方式 (VGG出于计算速度的考虑使用了single-scale)
+
+  1. single-scale
+
+     isotropically-rescaled 各项同性缩放，裁剪为224*224，固定的尺寸
+
+  2. multi-scale 
+
+     each training image is individually rescaled by randomly sampling S from a certain range [Smin,Smax] (we used Smin = 256 and Smax = 512).
+
+#### Testing
+
+
+
+
+## 其它
 
 #### TensorFlow版github VGG16,19代码
 
@@ -55,3 +74,17 @@
   其中一般k=2,\alpha=1^{10^{-4}},n=5,\beta=0.75
   $$
 
+
+
+#### 各项同性缩放和各向异性缩放
+
+- 各向异性缩放，不管图片比例，扭曲，直接缩放
+- 各项同性缩放
+    - 先扩充后裁剪
+
+      直接在原始图片中，把bounding box的边界进行扩展延伸成正方形，然后再进行裁剪；如果已经延伸到了原始图片的外边界，那么就用bounding box中的颜色均值填充
+
+    - 先裁剪后扩充
+
+      先把bounding box图片裁剪出来，然后用固定的背景颜色填充成正方形图片(背景颜色也是采用bounding box的像素颜色均值)
+      
