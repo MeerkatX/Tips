@@ -51,7 +51,7 @@
 
 - L2正则以及dropout. The training was regularised by weight decay (the L2 penalty multiplier set to $5*{10^{-4}}$) and dropout regularisation for the first two fully-connected layers (dropout ratio set to **0.5**).
 
-- 学习率设置，当准确度不再提升时减少学习率 The learning rate was initially set to $10^{−2}$. decreased by a factor of 10 when the validation set accuracy stopped improving
+- 学习率设置，当准确度不再提升时减少学习率 The learning rate was initially set to $10^{−2}​$. decreased by a factor of 10 when the validation set accuracy stopped improving
 #### 参数weights的初始化
 - 先训练一个浅的模型 began with training the configuration A, shallow enough to be trained with random initialisation
 
@@ -97,6 +97,7 @@
   b^i_{x,y}=a^i_{x,y}/\left(k+\alpha\sum_{j=\max(0,i-\frac{n}{2})}^{\min(N-1,i+\frac{n}{2})}(a_{x,y}^j)^2\right)^\beta
   其中一般k=2,\alpha=1^{10^{-4}},n=5,\beta=0.75
   $$
+
 
 
 
