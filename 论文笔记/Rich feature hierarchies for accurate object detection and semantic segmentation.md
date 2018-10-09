@@ -60,21 +60,22 @@ The third module is a set of class-speciﬁc linear **SVM**s.
 
 1. Performance layer-by-layer, with ﬁne-tuning一层一层的微调
 
-which suggests that the **pool5 features learned from ImageNet are general** 池化层得到的特征是通用的 and that most of the improvement is gained from learning domain-speciﬁc non-linear classiﬁers on top of them.
+     which suggests that the **pool5 features learned from ImageNet are general** 池化层得到的特征是通用的 and that most of the improvement is gained from learning domain-speciﬁc non-linear classiﬁers on top of them.
 
 2. Bounding box regression
 
-we train a linear regression model to predict a new detection window given the pool5 features for a selective search region proposal. 加入bounding box回归能够提高准确度
+     we train a linear regression model to predict a new detection window given the pool5 features for a selective search region proposal. 加入bounding box回归能够提高准确度
 $$
 P^i=(P^i_x,P^i_y,P^i_w,p^i_h)
 $$
-映射到
+
+​       映射到
+
 $$
 G=(G_x,G_y,G_w,G_h)
 $$
-通过参数$(d_x,d_y,d_w,d_h)$平移加尺度放缩 (至于为什么会是这种形式可以参考下面给出的博客)
-
-平移$(\Delta{x},\Delta{y})$，$\Delta{x}=P_wd_x(P),\Delta{y}=P_hd_y(P)$
+​       通过参数$(d_x,d_y,d_w,d_h)$平移加尺度放缩 (至于为什么会是这种形式可以参考下面给出的博客)
+​       平移$(\Delta{x},\Delta{y})$，$\Delta{x}=P_wd_x(P),\Delta{y}=P_hd_y(P)$
 $$
 \hat{G_x}=P_wd_x(P)+P_x
 $$
@@ -83,7 +84,7 @@ $$
 \hat{G_y}=P_hd_y(P)+P_y
 $$
 
-尺度缩放 $(S_w,S_h)$,$S_w=\exp(d_w(P)),S_h=\exp(d_h(P))$
+​       尺度缩放 $(S_w,S_h)$,$S_w=\exp(d_w(P)),S_h=\exp(d_h(P))$
 $$
 \hat{G_w}=P_w\exp{(d_w(P))}
 $$
@@ -92,7 +93,7 @@ $$
 \hat{G_h}=P_h\exp{(d_h(P))}
 $$
 
-真正需要的平移量和尺度缩放
+​       真正需要的平移量和尺度缩放
 $$
 t_x=(G_x-P_x)/P_w
 $$
@@ -109,7 +110,7 @@ $$
 t_h=\log(\frac{G_h}{P_h})
 $$
 
-计算d与t之间的L2 loss 其中$d_\star(P)={\omega}^T_{\star}\Phi_5(P)$
+​     计算d与t之间的L2 loss 其中$d_\star(P)={\omega}^T_{\star}\Phi_5(P)$
 
 3. 分别观察了没有微调的，和微调的pool5 fc6 fc7。最后得到经过 fine-tuning 的 fc7 加上BB回归能得到最好的准确度
 
