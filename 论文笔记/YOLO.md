@@ -16,6 +16,10 @@ Our system divides the input image into an $S\times S$ grid. If the center of an
 
 Each grid cell predicts B bounding boxes and conﬁdence scores for those boxes. 每个网格预测**B**个BB以及这些BB中分类的分数(置信度)
 
+网络结构
+
+![img](https://raw.githubusercontent.com/MeerkatX/Tips/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/yolo1.png)
+
 ## 预训练
 
 For pretraining we use the ﬁrst 20 convolutional layers from Figure3 followed by a average-pooling layer and a fully connected layer. 
@@ -38,7 +42,7 @@ leaky rectified linear activation：
 $$
 \phi(n)=
 \begin{cases}
-x,& \text{if $x$ > 0}\\[2ex]
+x,& \text{if $x$ > 0}\\
 0.1x,& \text{otherwise}
 \end{cases}
 $$
