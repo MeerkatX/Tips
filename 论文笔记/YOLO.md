@@ -54,9 +54,8 @@ $$
 
 这里面的$\mathbb{1}_{ij}^{obj}$的意思是如果目标在这第 $i$ 个cell并且是第 $j$ 个bb的预测的话就为1，否则为0
 
-其中$\lambda_{coord}=5$和$\lambda_{noobj}=.5$
+其中$\lambda_{coord}=5$和$\lambda_{noobj}=.5​$
 
-剩下的为loss：
 $$
 \lambda_{coord}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big[(x_i-\hat x_i)^2+(y_i-\hat y_i)^2\big] \\+\lambda_{coord}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big[(\sqrt{w_i}-\sqrt{\hat w_i})^2+\big(\sqrt h_i-\sqrt{\hat h_i}\big)^2\big]
 \\+\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big(C_i-\hat{C_i}\big)^2
