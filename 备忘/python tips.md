@@ -1,4 +1,45 @@
-## pytest 自动化测试
+## 类：
+
+#### 类方法：
+
+通过类来调用方法，而不是通过实例
+
+`class_foo` 的参数是 cls，代表类本身，当我们使用 `A.class_foo()` 时，cls 就会接收 A 作为参数。另外，被 `classmethod` 装饰的方法由于持有 cls 参数，因此我们可以在方法里面调用类的属性、方法，比如 `cls.bar`
+
+```python
+class A(object):
+    bar = 1
+    @classmethod
+    def class_foo(cls):
+        print ('Hello, ', cls)
+        print (cls.bar)
+
+>>> A.class_foo()   # 直接通过类来调用方法
+Hello,  <class '__main__.A'>
+1
+```
+
+#### 静态方法：
+
+在类中往往有一些方法跟类有关系，但是又不会改变类和实例状态的方法，这种方法是**静态方法**
+
+静态方法没有 `self` 和 `cls` 参数
+
+```python
+class A(object):
+    bar = 1
+    @staticmethod
+    def static_foo():
+        print ('Hello, ', A.bar)
+
+>>> a = A()
+>>> a.static_foo()
+Hello, 1
+>>> A.static_foo()
+Hello, 1
+```
+
+## pytest 自动化测试：
 
 - 测试文件以test\_开头（以_test结尾也可以）
 
@@ -13,7 +54,7 @@ py.test test_xx.py #可以这样用
 ```
 
 
-## skimage 用于python图像处理
+## skimage 用于python图像处理：
 
 ```python
 #几乎集合了matlab的所有图像处理功能 io,transform,data等可以查API
@@ -32,7 +73,7 @@ print(img.min())  #最小像素值
 print(img.mean()) #像素平均值
 ```
 
-## Inspect
+## Inspect：
 
 inspect模块主要提供了四种用处：
 
@@ -44,7 +85,7 @@ inspect模块主要提供了四种用处：
 
 4. 解析堆栈
 
-## Assert 断言
+## Assert 断言：
 
 指的是程序进行到某个时间点，断定其必然是某种状态。用来检查一个条件，如果它为真，就不做任何事。如果它为假，则会抛出AssertError并且包含错误信息
 
