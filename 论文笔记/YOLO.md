@@ -44,7 +44,8 @@ batch size = 64 , momentum = 0.9 , decay = 0.0005 , learning rate = $10^{-3}$ to
 $$
 \phi(n)=
 \begin{cases}
-x,& \text{if $x$ > 0}\\[2ex]
+x,& \text{if $x$ > 0}
+\\[2ex]
 0.1x,& \text{otherwise}
 \end{cases}
 $$
@@ -57,10 +58,11 @@ $$
 其中$\lambda_{coord}=5$和$\lambda_{noobj}=.5​$
 
 $$
-\lambda_{coord}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big[(x_i-\hat x_i)^2+(y_i-\hat y_i)^2\big] \\+\lambda_{coord}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big[(\sqrt{w_i}-\sqrt{\hat w_i})^2+\big(\sqrt h_i-\sqrt{\hat h_i}\big)^2\big]
-\\+\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big(C_i-\hat{C_i}\big)^2
-\\+\lambda_{noobj}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{noobj}_{ij}\big(C_i-\hat{C_i}\big)^2
-\\+\sum^{S^2}_{i=0}\mathbb{1}^{obj}_i\sum_{c\in{classes}}(p_i(c)-\hat p_i(c))^2
+\lambda_{coord}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big[(x_i-\hat x_i)^2+(y_i-\hat y_i)^2\big]\\
++\lambda_{coord}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big[(\sqrt{w_i}-\sqrt{\hat w_i})^2+\big(\sqrt h_i-\sqrt{\hat h_i}\big)^2\big]\\
++\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{obj}_{ij}\big(C_i-\hat{C_i}\big)^2\\
++\lambda_{noobj}\sum^{S^2}_{i=0}\sum^B_{j=0}\mathbb{1}^{noobj}_{ij}\big(C_i-\hat{C_i}\big)^2\\
++\sum^{S^2}_{i=0}\mathbb{1}^{obj}_i\sum_{c\in{classes}}(p_i(c)-\hat p_i(c))^2
 $$
 
 ## 代码
