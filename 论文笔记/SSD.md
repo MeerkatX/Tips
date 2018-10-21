@@ -8,13 +8,13 @@ SSD也是one-stage，SSD是在faster RCNN之后
 
 ## 简介
 
-Our approach, named SSD, discretizes the output space of bounding boxes into a set of **default boxes** *（这里的 d box 就和 faster RCNN 中的 anchors 类似）* over different **aspect ratios and scales** per feature map location*（因为是多尺度的，分别在 $38\times38$，$19\times19$，$10\times10$，$5\times5$，$3\times3$，$1\times1$ 这几个尺度上进行回归预测，所以相对的放缩，长宽比每一层相应的调整）*. At prediction time,the network generates **scores** for the presence of each object category in each default box and produces adjustments to the box to better match the object shape.*（在预测是，网络生成每个种类的分数，然后做回归调整更匹配这个目标的形状）*
+Our approach, named SSD, discretizes the output space of bounding boxes into a set of **default boxes** *（这里的 d box 就和 faster RCNN 中的 anchors 类似）* over different **aspect ratios and scales** per feature map location*（因为是多尺度的，分别在 $38\times38$，$19\times19$，$10\times10$，$5\times5$，$3\times3$，$1\times1$ 这几个尺度上进行回归预测，所以相对的放缩，长宽比每一层相应的调整）*. At prediction time,the network generates **scores** for the presence of each object category in each default box and produces adjustments to the box to better match the object shape.（在预测是，网络生成每个种类的分数，然后做回归调整更匹配这个目标的形状）
 
 上面是原文的简介。
 
 ## 网络结构
 
-![img](http://owv7la1di.bkt.clouddn.com/blog/171015/41E24AJgkj.png?imageslim)
+![img](https://github.com/MeerkatX/Tips/blob/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/SSD.png)
 
 以及
 
@@ -34,12 +34,11 @@ $x^p_{ij}=\{1,0\}$为第 i 个default box和第 j 个的类别为P的实际框�
 
 N是匹配的d box总数。N=0，loss=0
 $$
-L_{loc}(x,l,g)=\sum^N_{i\in Pos}\sum_{m\in {cx,cy,w,h}}x^k_{ij}smooth_{L1}(l^m_i-\hat g^m_j)\\box的回归如下
-\\
-\hat g_j^{cx}=(g^{cx}_j-d^{cx}_i)/d^w_i
-\\ \hat g_j^{cy}=(g^{cy}_j-d^{cy}_i)/d^h_i
-\\ \hat g^w_j=\log\big(\frac{g^w_j}{d^w_j}\big)
-\\ \hat g^h_j=\log\big(\frac{g^h_j}{d^h_j}\big)
+L_{loc}(x,l,g)=\sum^N_{i\in Pos}\sum_{m\in {cx,cy,w,h}}x^k_{ij}smooth_{L1}(l^m_i-\hat g^m_j)\\
+\hat g_j^{cx}=(g^{cx}_j-d^{cx}_i)/d^w_i\\
+\hat g_j^{cy}=(g^{cy}_j-d^{cy}_i)/d^h_i\\
+\hat g^w_j=\log\big(\frac{g^w_j}{d^w_j}\big)\\
+\hat g^h_j=\log\big(\frac{g^h_j}{d^h_j}\big)
 $$
 b-box回归和RCNN的一样
 
@@ -59,7 +58,7 @@ $$
 
 长宽比为$\alpha_r\in\{1,2,3,\frac{1}{2}\frac13\}$ ，其中width为$w_k^a=s_k\sqrt{a_r}$ 以及 $h^a_k=\frac{s_k}{\sqrt{a_r}}$，其中把aspect ratio = 1的情况多加一个$s’_k=\sqrt{s_ks_{k+1}}$，所以连着前面的五个，一共有6种长宽比。
 
-设置每个default box 的中心为$(\frac{i+0.5}{|f_k|},\frac{j+0.5}{f_k})$其中$|f_k|$是第K个的正方形feature map的大小，随后截取默认框坐标使其始终在[0，1]内，$i,j\in[0,|f_k|]$。
+设置每个default box 的中心为$(\frac{i+0.5}{|f_k|},\frac{j+0.5}{f_k})​$其中$|f_k|​$是第K个的正方形feature map的大小，随后截取默认框坐标使其始终在[0，1]内，$i,j\in[0,|f_k|]​$。
 
 ## Hard negative mining
 
