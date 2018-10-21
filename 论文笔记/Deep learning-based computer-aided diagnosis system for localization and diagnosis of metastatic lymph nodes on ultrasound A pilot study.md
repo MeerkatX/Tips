@@ -61,3 +61,26 @@ Zhou et al. proposed a method called **class activation mapping** (CAM), which u
 -  the model focuses on the medically and biologically important parts of an input image to classify the node as benign or malignant.
 -  we cropped the important region containing the maximum CNNGAP network activation value and drew a rectangle on the US image to show the location of the lymph nodes. 
 
+## Reference
+
+## Learning Deep Features for Discriminative Localization
+
+#### GAP (Global average pooling)
+
+即对整个特征图的其中一个channel求平均值。如$8\times8\times256$，那么最后得到256个数
+
+#### CAM (Class Activation Mapping)
+
+![img](https://github.com/MeerkatX/Tips/blob/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/cam.png)
+
+第k个特征图是$F_k=\sum_{x,y}f_k(x,y)$
+$$
+S_c=\sum_kw^c_k\sum_{x,y}f_k(x,y) \\
+=\sum_{x,y}\sum_{k}w^c_k f_k(x,y)
+$$
+We deﬁne Mc as the class activation map for class c, where each spatial element is given by 
+$$
+M_c(x,y)=\sum_kw_c^cf_k(x,y)
+$$
+其实就是将最后一层学习到的权重$w^c_k$与之对应的特征图$f_k​$乘起来，然后将所有的特征图相加，再把它强行resize到原图尺寸。（By simply upsampling the class activation map to the size of the input image, we can identify the image regions most relevant to the particular category. ）
+

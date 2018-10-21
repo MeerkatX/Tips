@@ -82,7 +82,11 @@ $i$ is the index of an anchor in a mini-batch and $p_i$ is the predicted probabi
 
 ## ROI Pooling
 
+在Fast R-CNN网络中，原始图片经过多层卷积与池化后，得到整图的feature map。而由selective search产生的大量proposal经过**映射**可以得到其在feature map上的映射区域（ROIs），这些ROIs即作为ROI Pooling层的输入。
 
+ROI Pooling时，将输入的h * w大小的feature map**分割成H * W**大小的子窗口（每个子窗口的大小约为h/H，w/W，其中H、W为超参数，如设定为7 x 7），对每个子窗口进行**max-pooling**操作，得到**固定输出**大小的feature map。而后进行后续的全连接层操作。
+
+同理在Faster RCNN中就是将RPN网络中的区域进行ROI池化。
 
 ## 之后预测
 
