@@ -48,6 +48,42 @@ An RPN is a fully convolutional network that simultaneously **predicts object bo
 
 所以最后计算参数量是 $3\times3\times512\times512+512\times(4+2)\times9$ 
 
+#### 代码如下：
+
+假设通过了vgg16的最后的conv5 3*3 得到feature map之后：
+
+```python
+rpn = slim.conv2d(net_conv, 512, [3, 3], trainable=is_training, weights_initializer=initializer, scope="rpn_conv/3x3")#这里利用卷积来实现滑动窗口，利用3*3*512的卷积核滑动
+```
+
+通过上面得到 $\times3\times512$ 的feature map
+
+```python
+ # shape = (1, ?, ?, 18) , 其中，batchsize=1
+ # 之后再利用[1*1*2*9]的卷积核做 前景背景的预测 (1,特征图宽，特征图高，18)
+rpn_cls_score = slim.conv2d(rpn, self._num_anchors * 2, [1, 1], trainable=is_training,
+                            weights_initializer=initializer,
+ # change it so that the score has 2 as its channel size
+ # shape = (1, ?, ?, 2)
+rpn_cls_score_reshape = self._reshape_layer(rpn_cls_score, 2, 'rpn_cls_score_reshape')
+ # shape = (1, ?, ?, 2)
+ # 这里利用sofmax来做 其中softmax_layer这个函数如果接收到rpn_cls_prob的话会reshape后再tf.nn.softmax
+ # 然后返回值会再reshape回去
+rpn_cls_prob_reshape = self._softmax_layer(rpn_cls_score_reshape, "rpn_cls_prob_reshape")
+ # shape = (?,) 这里找到每个窗口含有各类的最大值
+rpn_cls_pred = tf.argmax(tf.reshape(rpn_cls_score_reshape, [-1, 2]), axis=1, name="rpn_cls_pred")
+ # shape = (1, ?, ?, 18) 
+rpn_cls_prob = self._reshape_layer(rpn_cls_prob_reshape, self._num_anchors * 2, "rpn_cls_prob")
+ # shape = (1, ?, ?, 36) 这里同样利用1*1*36的卷积做回归 其中形状应该就是 (1,特征图宽，特征图高，36)
+rpn_bbox_pred = slim.conv2d(rpn, self._num_anchors * 4, [1, 1], trainable=is_training,
+                            weights_initializer=initializer,
+                            padding='VALID', activation_fn=None, scope='rpn_bbox_pred')
+```
+
+由此可以得到各`anchors` 和 `softmax` 的分数，传到下一层的`ROI pooling`层对感兴趣的区域进行池化特征提取，之后就和`fast rcnn`一样，进行`softmax`和回归
+
+如果是训练阶段的话，传入`ground truth`和种类进行训练
+
 ## loss Function
 
 首先是**正例** positive label：
@@ -88,14 +124,84 @@ ROI Pooling时，将输入的h * w大小的feature map**分割成H * W**大小�
 
 同理在Faster RCNN中就是将RPN网络中的区域进行ROI池化。
 
+```python
+def _crop_pool_layer(self, bottom, rois, name):
+    with tf.variable_scope(name) as scope:
+        batch_ids = tf.squeeze(tf.slice(rois, [0, 0], [-1, 1], name="batch_id"), [1])
+        # 得到归一化的bbox坐标（相对原图的尺寸进行归一化）
+        bottom_shape = tf.shape(bottom)
+        height = (tf.to_float(bottom_shape[1]) - 1.) * np.float32(self._feat_stride[0])
+        width = (tf.to_float(bottom_shape[2]) - 1.) * np.float32(self._feat_stride[0])
+        x1 = tf.slice(rois, [0, 1], [-1, 1], name="x1") / width
+        y1 = tf.slice(rois, [0, 2], [-1, 1], name="y1") / height
+        x2 = tf.slice(rois, [0, 3], [-1, 1], name="x2") / width
+        y2 = tf.slice(rois, [0, 4], [-1, 1], name="y2") / height
+        # Won't be back-propagated to rois anyway, but to save time
+        bboxes = tf.stop_gradient(tf.concat([y1, x1, y2, x2], axis=1))
+        pre_pool_size = cfg.POOLING_SIZE * 2
+        # 裁剪特征图，并resize成相同的尺寸
+        crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [pre_pool_size, pre_pool_size], name="crops")
+        # 进行标准的max pooling
+    return slim.max_pool2d(crops, [2, 2], padding='SAME')
+```
+
+
+
 ## 之后预测
 
 ![img](https://raw.githubusercontent.com/MeerkatX/Tips/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/fasterrcnn5.jpg)
 
 ## Reference
 
-[Faster-RCNN_TF](https://github.com/smallcorgi/Faster-RCNN_TF) 这个和YOLO的不同，似乎是利用导包等实现的，没有太具体的实现过程，都封装好了，可能还需要再阅读caffe的源码才行。
+[tf-faster-RCNN](https://github.com/endernewton/tf-faster-rcnn)
 
 [fasterRCNN](https://github.com/rbgirshick/py-faster-rcnn)
 
 [像玩乐高一样拆解Faster R-CNN：详解目标检测的实现过程](https://www.jiqizhixin.com/articles/2018-02-23-3)
+
+[tf.image.crop_and_resize](https://blog.csdn.net/m0_38024332/article/details/81779544)
+
+`voc`图像对应的xml信息：如果是 `xmin` `xmax`的方式来说的话应该需要修改成`xcenter` `ycenter`，简单的$w=x_{max}-x_{min}$ 以及 $h=y_{max}-y_{min}$ ，$x_{center}=w/2+偏移$，$y_{center}=h/2+偏移$
+
+```xml
+<annotation>  
+    <folder>VOC2007</folder>                             
+    <filename>2007_000392.jpg</filename>                               //文件名  
+    <source>                                                           //图像来源（不重要）  
+        <database>The VOC2007 Database</database>  
+        <annotation>PASCAL VOC2007</annotation>  
+        <image>flickr</image>  
+    </source>  
+    <size>                                               //图像尺寸（长宽以及通道数）                        
+        <width>500</width>  
+        <height>332</height>  
+        <depth>3</depth>  
+    </size>  
+    <segmented>1</segmented>                                   //是否用于分割（在图像物体识别中01无所谓）  
+    <object>                                                           //检测到的物体  
+        <name>horse</name>                                         //物体类别  
+        <pose>Right</pose>                                         //拍摄角度  
+        <truncated>0</truncated>                                   //是否被截断（0表示完整）  
+        <difficult>0</difficult>                                   //目标是否难以识别（0表示容易识别）  
+        <bndbox>                                                   //bounding-box（包含左上角和右下角xy坐标）  
+            <xmin>100</xmin>  
+            <ymin>96</ymin>  
+            <xmax>355</xmax>  
+            <ymax>324</ymax>  
+        </bndbox>  
+    </object>  
+    <object>                                                           //检测到多个物体  
+        <name>person</name>  
+        <pose>Unspecified</pose>  
+        <truncated>0</truncated>  
+        <difficult>0</difficult>  
+        <bndbox>  
+            <xmin>198</xmin>  
+            <ymin>58</ymin>  
+            <xmax>286</xmax>  
+            <ymax>197</ymax>  
+        </bndbox>  
+    </object>  
+</annotation> 
+```
+
