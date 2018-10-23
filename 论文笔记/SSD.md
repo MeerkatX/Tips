@@ -50,6 +50,7 @@ $$
 
 ## Choosing scales and aspect ratios for default boxes
 
+Suppose we want to use **m feature maps** for prediction. The **scale** of the **default boxes** for each feature map is computed as:计算m个特征图的default box的缩放尺度，可以结合代码理解
 $$
 s_k=s_{min}+\frac{s_{max}-s_{min}}{m-1}(k-1),k\in [1,m]
 $$
@@ -82,11 +83,37 @@ $$
 
 [SDD-TensorFlow](https://github.com/balancap/SSD-Tensorflow)
 
+[目标检测 -- SSD (tensorflow 版) 逐行逐句解读](https://blog.csdn.net/qq1483661204/article/details/79776065)
+
 ## Code
 
-下面是SSD网络结构的定义：
+下面是SSD网络整体结构的定义：
 
 ```python
+# num_classes=21 共20类加背景
+# feat_layers=['block4', 'block7', 'block8', 'block9', 'block10', 'block11', 'block12']
+# feat_shapes=[(64, 64), (32, 32), (16, 16), (8, 8), (4, 4), (2, 2), (1, 1)]
+# anchor_steps=[8, 16, 32, 64, 128, 256, 512] 这里 8*64=512 16*32=512等，特征图的缩放倍数
+# 是对应的vgg500
+# anchor_size_bounds=[0.10, 0.90]
+"""
+由上面的anchor_size_bounds来计算anchor_sizes 0.1*512=51.2 ... 0.9*521=480.8
+anchor_sizes=[(20.48, 51.2),
+    (51.2, 133.12),
+    (133.12, 215.04),
+    (215.04, 296.96),
+    (296.96, 378.88),
+    (378.88, 460.8),
+    (460.8, 542.72)]
+长宽比，与论文不同的是，最后两层也只用了两个尺度
+anchor_ratios=[[2, .5],
+    [2, .5, 3, 1./3],
+    [2, .5, 3, 1./3],
+    [2, .5, 3, 1./3],
+    [2, .5, 3, 1./3],
+    [2, .5],
+    [2, .5]]
+"""
 def ssd_net(inputs,
             num_classes=SSDNet.default_params.num_classes,
             feat_layers=SSDNet.default_params.feat_layers,
@@ -103,7 +130,7 @@ def ssd_net(inputs,
     """
     # SDD前几层是VGG-16的特征提取层
     # End_points collect relevant activations for external use.
-    end_points = {}
+    end_points = {}# 这里，因为要对很多层特征图进行bbox回归，分类，所以需要保存下来feature map
     with tf.variable_scope(scope, 'ssd_512_vgg', [inputs], reuse=reuse):
         # Original VGG-16 blocks.
         # slim.repeat应该是重复slim.conv2d 两次 卷积核为3*3*64
@@ -175,19 +202,79 @@ def ssd_net(inputs,
         predictions = []
         logits = []
         localisations = []
+        # 这里对['block4', 'block7', 'block8', 'block9', 'block10', 'block11', 'block12']
+        # 进行预测定位
         for i, layer in enumerate(feat_layers):
             with tf.variable_scope(layer + '_box'):
+                # 这里预测每个block对应着相应的anchor_size，anchor_ratios
                 p, l = ssd_vgg_300.ssd_multibox_layer(end_points[layer],
                                                       num_classes,
                                                       anchor_sizes[i],
                                                       anchor_ratios[i],
                                                       normalizations[i])
             predictions.append(prediction_fn(p))
+            # prediction_fn(p)即softmax
             logits.append(p)
-            localisations.append(l)
+            localisations.append(l)# 保存预测框
 
         return predictions, localisations, logits, end_points
-ssd_net.default_image_size = 512
+```
+
+紧接着上面 `ssd_multibox_layer`
+
+```python
+def ssd_multibox_layer(inputs,
+                       num_classes,
+                       sizes,
+                       ratios=[1],
+                       normalization=-1,
+                       bn_normalization=False):
+    """Construct a multibox layer, return a class and localization predictions.
+    """
+    net = inputs
+    if normalization > 0:
+        net = custom_layers.l2_normalization(net, scaling=True)
+    # Number of anchors.
+    num_anchors = len(sizes) + len(ratios)
+ 
+    # Location.定位，anchors的数量*4，即xc,yc,w,h
+    num_loc_pred = num_anchors * 4
+    loc_pred = slim.conv2d(net, num_loc_pred, [3, 3], activation_fn=None,
+                           scope='conv_loc')# 在特征图上进行3*3*num_anchors*4的卷积进行计算
+    loc_pred = custom_layers.channel_to_last(loc_pred)
+    loc_pred = tf.reshape(loc_pred,
+                          tensor_shape(loc_pred, 4)[:-1]+[num_anchors, 4])
+    # Class prediction.和上面相似
+    num_cls_pred = num_anchors * num_classes
+    cls_pred = slim.conv2d(net, num_cls_pred, [3, 3], activation_fn=None,
+                           scope='conv_cls')
+    cls_pred = custom_layers.channel_to_last(cls_pred)
+    cls_pred = tf.reshape(cls_pred,
+                          tensor_shape(cls_pred, 4)[:-1]+[num_anchors, num_classes])
+    return cls_pred, loc_pred
+```
+
+这个函数将NHWC或NCHW切换为NHWC 估计这里主要是`caffe`用的是NCHW需要切换，但`tensorflow`不用
+
+```python
+@add_arg_scope
+def channel_to_last(inputs,
+                    data_format='NHWC',
+                    scope=None):
+    """Move the channel axis to the last dimension. Allows to
+    provide a single output format whatever the input data format.
+    Args:
+      inputs: Input Tensor;
+      data_format: NHWC or NCHW.
+    Return:
+      Input in NHWC format.
+    """
+    with tf.name_scope(scope, 'channel_to_last', [inputs]):
+        if data_format == 'NHWC':
+            net = inputs
+        elif data_format == 'NCHW':
+            net = tf.transpose(inputs, perm=(0, 2, 3, 1))
+        return net
 ```
 
 有关`atrous algorithm`以及`slim.conv2d(net, 1024, [3, 3], rate=6, scope='conv6')` 中的`rate` 见下图：
