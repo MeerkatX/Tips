@@ -1,3 +1,11 @@
+#### `tf.concat`用法
+
+可以链接两个矩阵
+
+`tf.concat(concat_dim, values, name='your name')`要求的参数
+
+`concat_dim`表明在哪个维度上链接，`values`表明要链接的两个tensor
+
 #### `tf.argmax`的用法
 
 与`numpy.argmax`效果相似
@@ -28,4 +36,10 @@ with tf.Session() as sess:
 
 `tf.get_variable`获取已存在的变量（要求不仅名字，而且初始化方法等各个参数都一样），如果不存在，就新建一个。 
 **可以用各种初始化方法，不用明确指定值。**
+
+#### 参数为 `-1` 的情况
+
+对于普通列表来说-1是最后一个元素
+
+对于`numpy`来说`np.reshape(z,[-1,1])`是会根据另一个参数维度计算出数组的shape，如例子中[-1,1]来说，会变为一列，自动计算有几行 
 

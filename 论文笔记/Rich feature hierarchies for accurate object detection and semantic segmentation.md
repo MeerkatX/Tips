@@ -75,7 +75,7 @@ $$
 G=(G_x,G_y,G_w,G_h)
 $$
 ​       通过参数$(d_x,d_y,d_w,d_h)$平移加尺度放缩 (至于为什么会是这种形式可以参考下面给出的博客)
-​       平移$(\Delta{x},\Delta{y})$，$\Delta{x}=P_wd_x(P),\Delta{y}=P_hd_y(P)$
+​       平移$(\Delta{x},\Delta{y})$，$\Delta{x}=P_wd_x(P),\Delta{y}=P_hd_y(P)​$
 $$
 \hat{G_x}=P_wd_x(P)+P_x
 $$
@@ -127,3 +127,4 @@ The ﬁrst is to apply high-capacity convolutional neural networks to bottom-up 
 [RCNN](https://zhuanlan.zhihu.com/p/27473413)
 
 [Bounding Box回归](https://blog.csdn.net/zijin0802034/article/details/77685438)
+

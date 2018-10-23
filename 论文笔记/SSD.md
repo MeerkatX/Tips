@@ -8,7 +8,7 @@ SSD也是one-stage，SSD是在faster RCNN之后
 
 ## 简介
 
-Our approach, named SSD, discretizes the output space of bounding boxes into a set of **default boxes** *（这里的 d box 就和 faster RCNN 中的 anchors 类似）* over different **aspect ratios and scales** per feature map location*（因为是多尺度的，分别在 $38\times38$，$19\times19$，$10\times10$，$5\times5$，$3\times3$，$1\times1$ 这几个尺度上进行回归预测，所以相对的放缩，长宽比每一层相应的调整）*. At prediction time,the network generates **scores** for the presence of each object category in each default box and produces adjustments to the box to better match the object shape.（在预测是，网络生成每个种类的分数，然后做回归调整更匹配这个目标的形状）
+Our approach, named SSD, discretizes the output space of bounding boxes into a set of **default boxes** *（这里的 d box 就和 faster RCNN 中的 anchors 类似）* over different **aspect ratios and scales** per feature map location*（因为是多尺度的，分别在 $38\times38​$，$19\times19​$，$10\times10​$，$5\times5​$，$3\times3​$，$1\times1​$ 这几个尺度上进行回归预测，所以相对的放缩，长宽比每一层相应的调整）*. At prediction time,the network generates **scores** for the presence of each object category in each default box and produces adjustments to the box to better match the object shape.（在预测是，网络生成每个种类的分数，然后做回归调整更匹配这个目标的形状）
 
 上面是原文的简介。
 
@@ -42,7 +42,7 @@ L_{loc}(x,l,g)=\sum^N_{i\in Pos}\sum_{m\in {cx,cy,w,h}}x^k_{ij}smooth_{L1}(l^m_i
 $$
 b-box回归和RCNN的一样
 
-confidence loss是soft max loss也就是交叉熵
+confidence loss是`softmax` loss也就是交叉熵
 $$
 L_{conf(x,c)}=-\sum^N_{i\in Pos}x^p_{ij}log(\hat c^p_i)-\sum_{i\in Ncg}log(\hat c^0_i)\\
 \hat c^p_i=\frac{\exp(c^p_i)}{\sum_p\exp(c^p_i)}
@@ -81,3 +81,115 @@ $$
 [SSD在训练什么](https://zhuanlan.zhihu.com/p/29410169)
 
 [SDD-TensorFlow](https://github.com/balancap/SSD-Tensorflow)
+
+## Code
+
+下面是SSD网络结构的定义：
+
+```python
+def ssd_net(inputs,
+            num_classes=SSDNet.default_params.num_classes,
+            feat_layers=SSDNet.default_params.feat_layers,
+            anchor_sizes=SSDNet.default_params.anchor_sizes,
+            anchor_ratios=SSDNet.default_params.anchor_ratios,
+            normalizations=SSDNet.default_params.normalizations,
+            is_training=True,
+            dropout_keep_prob=0.5,
+            prediction_fn=slim.softmax,
+            reuse=None,
+            scope='ssd_512_vgg'):
+    """
+    SSD net definition.
+    """
+    # SDD前几层是VGG-16的特征提取层
+    # End_points collect relevant activations for external use.
+    end_points = {}
+    with tf.variable_scope(scope, 'ssd_512_vgg', [inputs], reuse=reuse):
+        # Original VGG-16 blocks.
+        # slim.repeat应该是重复slim.conv2d 两次 卷积核为3*3*64
+        net = slim.repeat(inputs, 2, slim.conv2d, 64, [3, 3], scope='conv1')
+        end_points['block1'] = net
+        net = slim.max_pool2d(net, [2, 2], scope='pool1')
+        # Block 2.
+        net = slim.repeat(net, 2, slim.conv2d, 128, [3, 3], scope='conv2')
+        end_points['block2'] = net
+        net = slim.max_pool2d(net, [2, 2], scope='pool2')
+        # Block 3.
+        net = slim.repeat(net, 3, slim.conv2d, 256, [3, 3], scope='conv3')
+        end_points['block3'] = net
+        net = slim.max_pool2d(net, [2, 2], scope='pool3')
+        # Block 4.
+        net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv4')
+        end_points['block4'] = net
+        net = slim.max_pool2d(net, [2, 2], scope='pool4')
+        # Block 5.
+        net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
+        end_points['block5'] = net
+        net = slim.max_pool2d(net, [3, 3], 1, scope='pool5')
+
+        # Additional SSD blocks.这里开始添加SSD的块
+        # Block 6: let's dilate the hell out of it!
+        # 这里rate即扩展卷积或带孔卷积，指定用于atrue的扩张率，使用了atrous algorithm
+        net = slim.conv2d(net, 1024, [3, 3], rate=6, scope='conv6')
+        end_points['block6'] = net
+        # Block 7: 1x1 conv. 
+        net = slim.conv2d(net, 1024, [1, 1], scope='conv7')
+        end_points['block7'] = net
+
+        # Block 8/9/10/11: 1x1 and 3x3 convolutions stride 2 (except lasts).
+        end_point = 'block8'
+        with tf.variable_scope(end_point):
+            net = slim.conv2d(net, 256, [1, 1], scope='conv1x1')
+            net = custom_layers.pad2d(net, pad=(1, 1))
+            net = slim.conv2d(net, 512, [3, 3], stride=2, scope='conv3x3', padding='VALID')
+        end_points[end_point] = net
+        end_point = 'block9'
+        with tf.variable_scope(end_point):
+            net = slim.conv2d(net, 128, [1, 1], scope='conv1x1')
+            net = custom_layers.pad2d(net, pad=(1, 1))
+            net = slim.conv2d(net, 256, [3, 3], stride=2, scope='conv3x3', padding='VALID')
+        end_points[end_point] = net
+        end_point = 'block10'
+        with tf.variable_scope(end_point):
+            net = slim.conv2d(net, 128, [1, 1], scope='conv1x1')
+            net = custom_layers.pad2d(net, pad=(1, 1))
+            net = slim.conv2d(net, 256, [3, 3], stride=2, scope='conv3x3', padding='VALID')
+        end_points[end_point] = net
+        end_point = 'block11'
+        with tf.variable_scope(end_point):
+            net = slim.conv2d(net, 128, [1, 1], scope='conv1x1')
+            net = custom_layers.pad2d(net, pad=(1, 1))
+            net = slim.conv2d(net, 256, [3, 3], stride=2, scope='conv3x3', padding='VALID')
+        end_points[end_point] = net
+        end_point = 'block12'
+        with tf.variable_scope(end_point):
+            net = slim.conv2d(net, 128, [1, 1], scope='conv1x1')
+            net = custom_layers.pad2d(net, pad=(1, 1))
+            net = slim.conv2d(net, 256, [4, 4], scope='conv4x4', padding='VALID')
+            # Fix padding to match Caffe version (pad=1).
+            # pad_shape = [(i-j) for i, j in zip(layer_shape(net), [0, 1, 1, 0])]
+            # net = tf.slice(net, [0, 0, 0, 0], pad_shape, name='caffe_pad')
+        end_points[end_point] = net
+
+        # Prediction and localisations layers.
+        predictions = []
+        logits = []
+        localisations = []
+        for i, layer in enumerate(feat_layers):
+            with tf.variable_scope(layer + '_box'):
+                p, l = ssd_vgg_300.ssd_multibox_layer(end_points[layer],
+                                                      num_classes,
+                                                      anchor_sizes[i],
+                                                      anchor_ratios[i],
+                                                      normalizations[i])
+            predictions.append(prediction_fn(p))
+            logits.append(p)
+            localisations.append(l)
+
+        return predictions, localisations, logits, end_points
+ssd_net.default_image_size = 512
+```
+
+有关`atrous algorithm`以及`slim.conv2d(net, 1024, [3, 3], rate=6, scope='conv6')` 中的`rate` 见下图：
+
+![img](https://github.com/MeerkatX/Tips/blob/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/atrousalgorithm.jpg)
