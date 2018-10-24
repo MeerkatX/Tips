@@ -26,7 +26,7 @@ For pretraining we use the ﬁrst 20 convolutional layers from Figure3 followed 
 
 ## 输入
 
-预训练20层卷积层时是半分辨率，训练的时候$448\times448$作为输入图像（因为检测需要细粒度的视觉信息）并且新添加了4个卷积层和2个全连接层
+预训练20层卷积层时是半分辨率即$224\times224$，训练的时候$448\times448$作为输入图像（因为检测需要细粒度的视觉信息）并且新添加了4个卷积层和2个全连接层
 
 ## grid cell
 
@@ -44,8 +44,7 @@ batch size = 64 , momentum = 0.9 , decay = 0.0005 , learning rate = $10^{-3}$ to
 $$
 \phi(n)=
 \begin{cases}
-x,& \text{if $x$ > 0}
-\\[2ex]
+x,& \text{if $x$ > 0}\\
 0.1x,& \text{otherwise}
 \end{cases}
 $$
@@ -65,9 +64,62 @@ $$
 +\sum^{S^2}_{i=0}\mathbb{1}^{obj}_i\sum_{c\in{classes}}(p_i(c)-\hat p_i(c))^2
 $$
 
+## Reference
+
+[非极大值抑制NMS](https://www.julyedu.com/question/big/kp_id/26/ques_id/2141)
+
+[YOLO-TensorFlow](https://github.com/gliese581gg/YOLO_tensorflow)
+
 ## 代码
 
-输出解析的代码需要仔细看一下，暂时不理解：
+网络结构：
+
+```python
+def build_networks(self):
+		if self.disp_console : print "Building YOLO_small graph..."
+		self.x = tf.placeholder('float32',[None,448,448,3])
+		self.conv_1 = self.conv_layer(1,self.x,64,7,2)
+		self.pool_2 = self.pooling_layer(2,self.conv_1,2,2)
+		self.conv_3 = self.conv_layer(3,self.pool_2,192,3,1)
+		self.pool_4 = self.pooling_layer(4,self.conv_3,2,2)
+		self.conv_5 = self.conv_layer(5,self.pool_4,128,1,1)
+		self.conv_6 = self.conv_layer(6,self.conv_5,256,3,1)
+		self.conv_7 = self.conv_layer(7,self.conv_6,256,1,1)
+		self.conv_8 = self.conv_layer(8,self.conv_7,512,3,1)
+		self.pool_9 = self.pooling_layer(9,self.conv_8,2,2)
+		self.conv_10 = self.conv_layer(10,self.pool_9,256,1,1)
+		self.conv_11 = self.conv_layer(11,self.conv_10,512,3,1)
+		self.conv_12 = self.conv_layer(12,self.conv_11,256,1,1)
+		self.conv_13 = self.conv_layer(13,self.conv_12,512,3,1)
+		self.conv_14 = self.conv_layer(14,self.conv_13,256,1,1)
+		self.conv_15 = self.conv_layer(15,self.conv_14,512,3,1)
+		self.conv_16 = self.conv_layer(16,self.conv_15,256,1,1)
+		self.conv_17 = self.conv_layer(17,self.conv_16,512,3,1)
+		self.conv_18 = self.conv_layer(18,self.conv_17,512,1,1)
+		self.conv_19 = self.conv_layer(19,self.conv_18,1024,3,1)
+		self.pool_20 = self.pooling_layer(20,self.conv_19,2,2)
+		self.conv_21 = self.conv_layer(21,self.pool_20,512,1,1)
+		self.conv_22 = self.conv_layer(22,self.conv_21,1024,3,1)
+		self.conv_23 = self.conv_layer(23,self.conv_22,512,1,1)
+		self.conv_24 = self.conv_layer(24,self.conv_23,1024,3,1)
+		self.conv_25 = self.conv_layer(25,self.conv_24,1024,3,1)
+		self.conv_26 = self.conv_layer(26,self.conv_25,1024,3,2)
+		self.conv_27 = self.conv_layer(27,self.conv_26,1024,3,1)
+		self.conv_28 = self.conv_layer(28,self.conv_27,1024,3,1)
+		self.fc_29 = self.fc_layer(29,self.conv_28,512,flat=True,linear=False)
+		self.fc_30 = self.fc_layer(30,self.fc_29,4096,flat=False,linear=False)
+		#skip dropout_31
+        #这里直接预测1470即图中的7*7*30的块，在后面interpret_output处解析为解
+		self.fc_32 = self.fc_layer(32,self.fc_30,1470,flat=False,linear=True)
+		self.sess = tf.Session()
+		self.sess.run(tf.initialize_all_variables())
+		#获取之前训练好的参数
+        self.saver = tf.train.Saver()
+		self.saver.restore(self.sess,self.weights_file)
+		if self.disp_console : print "Loading complete!" + '\n'
+```
+
+输出解析的代码：
 
 ```python
 #解析输出
@@ -137,13 +189,4 @@ def interpret_output(self,output):
 			result.append([self.classes[classes_num_filtered[i]],boxes_filtered[i][0],boxes_filtered[i][1],boxes_filtered[i][2],boxes_filtered[i][3],probs_filtered[i]])
 
 		return result
-
 ```
-
-
-
-## Reference
-
-[非极大值抑制NMS](https://www.julyedu.com/question/big/kp_id/26/ques_id/2141)
-
-[YOLO-TensorFlow](https://github.com/gliese581gg/YOLO_tensorflow)
