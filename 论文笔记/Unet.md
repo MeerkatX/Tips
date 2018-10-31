@@ -62,6 +62,10 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
     conv5 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
     drop5 = Dropout(0.5)(conv5)
 	# 这里进行上采样操作，利用 2*2*1024*512 的卷积核
+    # 根据keras的UpSampling2D源代码来看：默认interpolation为nearest最近邻
+    # K.resize_images(inputs,self.size[0],self.size[1],self.data_format, self.interpolation)
+    # 差值方法。0：双线性差值。1：最近邻居法。2：双三次插值法。3：面积插值法
+    # 这里就是conv+upsampling结合来做“反卷积”
     up6 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop5))
     # 这里进行合并操作，将drop4的特征图加入到up6的后面
     merge6 = merge([drop4,up6], mode = 'concat', concat_axis = 3)
