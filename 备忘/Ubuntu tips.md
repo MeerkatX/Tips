@@ -14,6 +14,26 @@ $ sudo ./rjsupport.sh -d 1 -u S1807016 -p 036516
 $ sudo service network-manager restart
 ```
 
+## pip源配置：
+
+清华pip源地址：<https://pypi.tuna.tsinghua.edu.cn/simple> 
+
+临时使用：
+
+```bash
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple some-package
+```
+
+[ubuntu更换安装源和pip镜像源](https://blog.csdn.net/wssywh/article/details/79216437)
+
+## Ubuntu下添加应用快捷方式：
+
+[Ubuntu 下添加应用快捷方式](https://blog.csdn.net/yin__ren/article/details/80469499)
+
+## 清华大学开源软件镜像站：
+
+[清华大学开源软件镜像站](https://mirrors.tuna.tsinghua.edu.cn/)
+
 ## Git
 
 #### 创建Git仓库
