@@ -24,7 +24,7 @@ In the last layer a 1×1×1 convolution reduces the number of output channels to
 
 ## Training
 
-![img]()
+![training](https://raw.githubusercontent.com/MeerkatX/Tips/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/3dunettrain.png)
 
 ## Code:
 
