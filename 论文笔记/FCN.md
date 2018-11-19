@@ -23,3 +23,5 @@ Our key insight is to build “fully convolutional” networks that take input o
 #### Patch-wise training
 
 An early approach to segmentation was to run patches of pixels, centered around the pixel of interest, through a CNN classifier ([Ciresan et al. 2012](https://link.zhihu.com/?target=https%3A//papers.nips.cc/paper/4741-deep-neural-networks-segment-neuronal-membranes-in-electron-microscopy-images.pdf)). Doing this for each pixel produces the segmented image. Following[Akkus et al.](https://link.zhihu.com/?target=https%3A//www.ncbi.nlm.nih.gov/pmc/articles/PMC5537095/)(2017), we will call this “patch-wise” segmentation.
+
+未完待续…

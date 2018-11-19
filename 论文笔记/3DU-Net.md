@@ -112,3 +112,4 @@ def get_up_convolution(n_filters, pool_size, kernel_size=(2, 2, 2), strides=(2, 
 
 gitHub上利用3D U-Net分割的效果图：
 ![tumor_segmentation](https://raw.githubusercontent.com/MeerkatX/Tips/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/tumor_segmentation_illusatration.gif)
+
