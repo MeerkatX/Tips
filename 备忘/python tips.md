@@ -73,6 +73,95 @@ print(img.min())  #最小像素值
 print(img.mean()) #像素平均值
 ```
 
+```python
+from skimage import io, data, color,transform
+import numpy as np
+
+img = io.imread("./IMG-0003-00130.jpg")
+gray = color.rgb2gray(img)
+
+'''
+测试一下图像旋转等操作
+'''
+rows,cols=gray.shape
+print(gray.shape)
+## 去除两边的操作：
+gray[:,[x for x in range(rows) if x < 100 or x>400]]=0
+## 图形旋转的操作，旋转15度但是不变
+img1=transform.rotate(img,15)
+#img1[:,[x for x in range(rows) if x < 100 or x>400]]=0
+#img2=img1[[x for x in range(rows) if x > 100 and x<400],:]
+img3=img1[100:400,100:400]
+# img4=img1[100:400][:,100:400]
+print(img3[139][206],img3[100][40])
+print(type(img3[100:300][3]),type(img3[100][200]))
+io.imshow(img3)
+io.show()
+
+##################################################################################
+
+
+测试了一下label2rgb，大致范围为0-1，分为三个标签，变成三个颜色
+print(gray[255,255])
+rows, cols = gray.shape
+labels = np.zeros([rows, cols])
+for i in range(rows):
+    for j in range(cols):
+        if (gray[i, j] < 0.20):
+            labels[i, j] = 0
+        elif(gray[i,j]>0.8):
+            labels[i, j] = 1
+        else:
+            labels[i,j]=2
+####### 这个函数可以用于分割后对应标签转换为分割mask图
+dst = color.label2rgb(labels)
+
+io.imshow(dst)
+io.show()
+```
+
+```python
+import cv2
+import numpy as np
+from skimage import io, color
+
+'''
+这部分是opencv的东西
+img = cv2.imread("./IMG-0003-00130.jpg", 0)
+print(img.shape)
+fi=img/255.0
+gamma=0.2
+out=np.power(fi,gamma)
+img_blur = cv2.GaussianBlur(img, (3, 3), 0)  # 高斯滤波
+ret, img_th = cv2.threshold(img_blur, 100, 255, 0)  # 二值化
+# cv2.imwrite("canny.jpg", cv2.Canny(img_th, 512, 512))
+# cv2.imshow("A", cv2.imread("./canny.jpg"))
+cv2.imshow("B", img_th)
+cv2.imshow("gama",out)
+cv2.waitKey()
+cv2.destroyAllWindows()
+'''
+# 要用skimage可能要先安装matplotlib之类的
+print(io.find_available_plugins())
+
+
+# 读取灰度图片
+def convert_gray(f):
+    rgb = io.imread(f)
+    return color.rgb2gray(rgb)
+
+
+# 同时读取多个图片
+paths = "./*.jpg"
+coll = io.ImageCollection(paths, load_func=convert_gray)
+# load_func默认是io.imread()，如果要读入灰度图，如例子中那样自己写一个函数
+print(type(coll[0]))  # 得到的是ndarray 三个维度
+io.imshow(coll[0])  # 需要安装matplotlib或者pil作为底层插件
+io.show()
+```
+
+[skimage图像处理](https://www.jianshu.com/p/f2e88197e81d)
+
 ## Inspect：
 
 inspect模块主要提供了四种用处：
