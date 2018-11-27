@@ -39,6 +39,20 @@ Hello, 1
 Hello, 1
 ```
 
+## glob方法：
+
+glob可以用来查找文件，返回查找到的文件路径，可以用于加载数据集
+
+```python
+import glob
+some_txt_dir='/home/txt/'
+file_path=glob.glob(some_txt_dir+'*.txt')
+# 将返回一个列表该目录下所包含所有.txt文件的路径列表
+# 之后用相应的读取文件的方式来读取
+```
+
+
+
 ## pytest 自动化测试：
 
 - 测试文件以test\_开头（以_test结尾也可以）
@@ -209,4 +223,8 @@ array([[[0,0,0],
         [0,1,2],
         [0,1,2]]])
 ```
+
+## matplotlib
+
+`%matplotlib inline` 在`jupyter notebook`中很常见，具体来说可以在`Ipython`编译器里直接使用，功能是可以内嵌绘图，并且可以省略掉`plt.show()`这一步
 
