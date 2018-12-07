@@ -4,7 +4,7 @@
 
 ## 网络结构：
 
-![net](https://raw.githubusercontent.com/MeerkatX/Tips/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/3dRunet1.png)
+![net](https://github.com/MeerkatX/Tips/blob/master/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/imgs/3DRunet1.png)
 
 基于ResNet+U-net的3D改造，在encoder阶段接受全图，在F3的特征图提取ROI区域，并且扩展到F2,F1以用来进行之后类似U-net的特征融合。
 
